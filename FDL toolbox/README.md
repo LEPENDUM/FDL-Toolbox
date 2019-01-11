@@ -16,7 +16,7 @@ The toolbox includes:
 
 The toolbox has been developped using Matlab 2017a.
 
-Matlab's Parallel Processing Toolbox and a CUDA GPU are required.
+Both CPU and GPU versions are available for each step (calibration, construction, rendering). For the GPU version, Matlab's Parallel Processing Toolbox and a CUDA GPU are required.
 
 ## Demo
 
