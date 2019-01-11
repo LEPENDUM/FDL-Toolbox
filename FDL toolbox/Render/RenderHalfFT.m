@@ -48,7 +48,7 @@ Ifft = sum( bsxfun(@times, FDL_gpu, arrayfun(@renderLayersWeightCustomAperture,w
             out = real(out) + 1i* sgnFact_k * imag(out);
             
             %Set view position to (u0,v0).
-            out = out*exp(2*pi*1i*disp_k*(u0*wx+v0*wy));
+            out = out*exp(2i*pi*disp_k*(u0*wx+v0*wy));
             
         else
             out = single(complex(0));

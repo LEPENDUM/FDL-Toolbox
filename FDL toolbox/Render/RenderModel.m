@@ -12,15 +12,17 @@ classdef RenderModel < Observable
 %the notification does not produce any effect).
     
     properties ( Access = private )
-        FDL_gpu
-        wx_gpu
-        wy_gpu
-        Disps_gpu
+        FDL
+        wx
+        wy
+        Disps
         
-        ImageGPU
+        usingGPU
+        
+        Image_
         crop
         
-        Apfft_gpu, dWu, dWv, uC, vC
+        Apfft, dWu, dWv, uC, vC
         
         xC, yC
         even_fft
@@ -74,16 +76,35 @@ classdef RenderModel < Observable
     
     methods
         
-        function obj = RenderModel(FDL, fullSize, crop, Disps, DispMap, isLinear, gammaOffset)
+        %Constructor with parameters:
+        % -FDL   : Fourier Disparity layers (only left half of the spectrum (i.e. negative or null horizontal frequencies) may be given).
+        % -fullSize : full image size in the format [verticalResolution, horizontalResolution], including the padded borders.
+        % -crop  : number of pixels to crop (to remove the padded borders) on each side of the image : [top, bottom, left, right].
+        % -Disps : list of disparity values associated with each layer.
+        % -DispMap: (Optional) Disparity map used for refocusing automatically when the user clicks on the image (if not given, a disparity map will be estimated).
+        % -isLinear: (Optional) Set to true if gammaCorrection is needed.
+        % -gammaOffset: (Optional) offset parameter to apply after gamma correction (only used if isLinear is true).
+        % -useGPU : (Optional) true(default): use GPU acceleration if a CUDA Device is available and matlab's parallel processing toolbox is active. / false: CPU only.
+        function obj = RenderModel(FDL, fullSize, crop, Disps, DispMap, isLinear, gammaOffset, useGPU)
             
             if(nargin==0)
                 return;
             end
             
-            tic;fprintf('Initializating data...');            
+            %Check if GPU should be used
+            hasGPU = parallel.gpu.GPUDevice.isAvailable;
+            if(~exist('useGPU','var') ||  isempty(useGPU) )
+                useGPU = hasGPU;
+            elseif(useGPU && ~hasGPU)
+                warning('Impossible to use GPU. Only CPU will be used.');
+            end
+            obj.usingGPU = useGPU & hasGPU;
+            
             
             if(exist('isLinear','var') && ~isempty(isLinear)), obj.isLinear=isLinear;end
             if(exist('gammaOffset','var') &&  ~isempty(gammaOffset)), obj.gammaOffset=gammaOffset;end
+            
+            tic;fprintf('Initializating data...');
             
             %Dimension variables
             [wx,wy] = meshgrid(1:fullSize(2),1:fullSize(1));
@@ -97,14 +118,23 @@ classdef RenderModel < Observable
             obj.even_fft = 1-mod(fullSize(1:2),2);
             obj.crop = crop;
 
-            %Convert data for GPU and single format
-            obj.FDL_gpu = gpuArray(single(FDL(:,1:obj.xC,:,:)));
-            obj.wx_gpu = gpuArray(single(wx));
-            obj.wy_gpu = gpuArray(single(wy));
-            obj.Disps_gpu = zeros(1,1,1,numDisp,'single','gpuArray');
-            obj.Disps_gpu(1,1,1,:)=Disps;
+            %Prepare data for single precision format and GPU if needed.
+            if(obj.usingGPU)
+                obj.FDL = gpuArray(single(FDL(:,1:obj.xC,:,:)));
+                obj.wx = gpuArray(single(wx));
+                obj.wy = gpuArray(single(wy));
+                obj.Disps = zeros(1,1,1,numDisp,'single','gpuArray');
+                obj.Image_ = zeros([fullSize(1:2), nChan],'single','gpuArray');
+            else
+                obj.FDL = single(FDL(:,1:obj.xC,:,:));
+                obj.wx = single(wx);
+                obj.wy = single(wy);
+                obj.Disps = zeros(1,1,1,numDisp,'single');
+                obj.Image_ = zeros([fullSize(1:2), nChan],'single');
+            end
+            obj.Disps(1,1,1,:)=Disps;
             
-            obj.ImageGPU = zeros([fullSize(1:2), nChan],'single','gpuArray');
+            
             
             t=toc;fprintf(['\b\b\b (done in ' num2str(t) 's)\n']);
             
@@ -130,19 +160,23 @@ classdef RenderModel < Observable
                 obj.ApShapeId=4;
                 
                 obj.computeAperture();
-                MinErrMap = gpuArray(inf(size(obj.ImageGPU,1),size(obj.ImageGPU,2),2,'single'));
-                obj.DispMap = zeros(size(obj.ImageGPU,1),size(obj.ImageGPU,2));
+                if(obj.usingGPU)
+                    MinErrMap = gpuArray(inf(size(obj.Image_,1),size(obj.Image_,2),2,'single'));
+                else
+                    MinErrMap = inf(size(obj.Image_,1),size(obj.Image_,2),2,'single');
+                end
+                obj.DispMap = zeros(size(obj.Image_,1),size(obj.Image_,2));
                 for k=1:numDisp
                     obj.s = Disps(k);
                     obj.radius=0;
                     obj.renderImage();
-                    SAI = mean(real(obj.ImageGPU),3);
+                    SAI = mean(real(obj.Image_),3);
                     rList = .5:.5:3;
                     MinErrMap(:,:,2)=0;
                     for r = rList
                         obj.radius=r;
                         obj.renderImage();
-                        MinErrMap(:,:,2) = MinErrMap(:,:,2) + (SAI-mean(real(obj.ImageGPU),3)).^2;
+                        MinErrMap(:,:,2) = MinErrMap(:,:,2) + (SAI-mean(real(obj.Image_),3)).^2;
                     end
                     [MinErrMap(:,:,1),Id] = min(MinErrMap,[],3);
                     obj.DispMap(Id==2) = Disps(k);
@@ -170,33 +204,43 @@ classdef RenderModel < Observable
         %Image render function
         function renderImage(obj)
             %Render first half of the spectrum
-            obj.ImageGPU(:,1:obj.xC,:) = RenderHalfFT(obj.FDL_gpu, obj.wx_gpu, obj.wy_gpu, obj.Disps_gpu, obj.Apfft_gpu, obj.dWu, obj.dWv, obj.uC, obj.vC, obj.s, obj.radius, obj.u0, obj.v0);
+            if(obj.usingGPU)
+                obj.Image_(:,1:obj.xC,:) = RenderHalfFT(obj.FDL, obj.wx, obj.wy, obj.Disps, obj.Apfft, obj.dWu, obj.dWv, obj.uC, obj.vC, obj.s, obj.radius, obj.u0, obj.v0);
+            else
+                obj.Image_(:,1:obj.xC,:) = RenderHalfFT_cpu(obj.FDL, obj.wx, obj.wy, obj.Disps, obj.Apfft, obj.dWu, obj.dWv, obj.uC, obj.vC, obj.s, obj.radius, obj.u0, obj.v0);
+            end
             %Reconstruct second half of the spectrum using symmetries
-            obj.ImageGPU(obj.yC+1:end,obj.xC+1:end,:) = conj(obj.ImageGPU(obj.yC-1:-1:1+obj.even_fft(1),obj.xC-1:-1:1+obj.even_fft(2),:,:));
-            obj.ImageGPU(1+obj.even_fft(1):obj.yC, obj.xC+1:end,:) = conj(obj.ImageGPU(end:-1:obj.yC, obj.xC-1:-1:1+obj.even_fft(2),:,:));
+            obj.Image_(obj.yC+1:end,obj.xC+1:end,:) = conj(obj.Image_(obj.yC-1:-1:1+obj.even_fft(1),obj.xC-1:-1:1+obj.even_fft(2),:,:));
+            obj.Image_(1+obj.even_fft(1):obj.yC, obj.xC+1:end,:) = conj(obj.Image_(end:-1:obj.yC, obj.xC-1:-1:1+obj.even_fft(2),:,:));
              
             if(obj.skipInvTr)
-                obj.ImageGPU = abs(obj.ImageGPU)/50;
-                %obj.ImageGPU = cat(3,real(obj.ImageGPU(:,:,2)),imag(obj.ImageGPU(:,:,2)),abs(obj.ImageGPU(:,:,2)))/50;
+                obj.Image_ = abs(obj.Image_)/50;
+                %obj.Image_ = cat(3,real(obj.Image_(:,:,2)),imag(obj.Image_(:,:,2)),abs(obj.Image_(:,:,2)))/50;
             else
             %Apply inverse Fourier Transform
-                obj.ImageGPU = ifft2(ifftshift(ifftshift(obj.ImageGPU,1),2));
+                obj.Image_ = ifft2(ifftshift(ifftshift(obj.Image_,1),2));
             end
 
 %%%%%%%%%%%%%
             if(obj.isLinear)
-                obj.ImageGPU(1+obj.crop(3):end-obj.crop(4),1+obj.crop(1):end-obj.crop(2),:) = RenderModel.BT709_gamma(obj.ImageGPU(1+obj.crop(3):end-obj.crop(4),1+obj.crop(1):end-obj.crop(2),:))-obj.gammaOffset;
+                obj.Image_(1+obj.crop(3):end-obj.crop(4),1+obj.crop(1):end-obj.crop(2),:) = RenderModel.BT709_gamma(obj.Image_(1+obj.crop(3):end-obj.crop(4),1+obj.crop(1):end-obj.crop(2),:))-obj.gammaOffset;
             end
-            obj.Image = gather( real(uint8(255*obj.ImageGPU(1+obj.crop(3):end-obj.crop(4),1+obj.crop(1):end-obj.crop(2),:))));
+            obj.Image = gather( real(uint8(255*obj.Image_(1+obj.crop(3):end-obj.crop(4),1+obj.crop(1):end-obj.crop(2),:))));
             
         end
         
         %Aperture update function
         function computeAperture(obj)
-        	[obj.Ap, Apfft, obj.dWu, obj.dWv, obj.uC, obj.vC, obj.radCorrection] = buildAperture(RenderModel.ApShapes{obj.ApShapeId},obj.SpatialApRes,obj.FreqApResIncrease,[obj.apThickness obj.numBlades obj.apAngle]);
-            obj.trueRadius = obj.radius * obj.radCorrection / obj.SpatialApRes;
-            Apfft = Apfft/Apfft(obj.vC,obj.uC);
-            obj.Apfft_gpu = gpuArray(complex(single(Apfft)));
+            if(obj.usingGPU)
+                [obj.Ap, Apfft, obj.dWu, obj.dWv, obj.uC, obj.vC, obj.radCorrection] = buildAperture(RenderModel.ApShapes{obj.ApShapeId},obj.SpatialApRes,obj.FreqApResIncrease,[obj.apThickness obj.numBlades obj.apAngle]);
+                obj.trueRadius = obj.radius * obj.radCorrection / obj.SpatialApRes;
+                Apfft = Apfft/Apfft(obj.vC,obj.uC);
+                obj.Apfft = gpuArray(complex(single(Apfft)));
+            else
+                [obj.Ap, obj.Apfft, obj.dWu, obj.dWv, obj.uC, obj.vC, obj.radCorrection] = buildAperture(RenderModel.ApShapes{obj.ApShapeId},obj.SpatialApRes,obj.FreqApResIncrease,[obj.apThickness obj.numBlades obj.apAngle]);
+                obj.trueRadius = obj.radius * obj.radCorrection / obj.SpatialApRes;
+                obj.Apfft = obj.Apfft/obj.Apfft(obj.vC,obj.uC);
+            end
         end
         
         
@@ -277,10 +321,10 @@ classdef RenderModel < Observable
         
 
         function saveFDL(obj,filename, U,V)
-            FDL = gather(obj.FDL_gpu);
-            Disps = squeeze(gather(obj.Disps_gpu))';
+            FDL = gather(obj.FDL);
+            Disps = squeeze(gather(obj.Disps))';
             crop = obj.crop;
-            fullSize = [size(obj.ImageGPU,1), size(obj.ImageGPU,2)];
+            fullSize = [size(obj.Image_,1), size(obj.Image_,2)];
             VarList = {'FDL','Disps','crop','fullSize'};
             if(obj.isLinear)
                 isLinear = obj.isLinear;

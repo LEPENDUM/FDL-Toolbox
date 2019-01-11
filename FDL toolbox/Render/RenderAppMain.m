@@ -11,6 +11,7 @@
 %   -U,V   : (Optional) Lists of angular coordinates of the views from which the layer model was constructed (displayed in the viewpoint panel and needed to define useful range for some render parameters).
 %   -DispMap: (Optional) Disparity map used for refocusing automatically when the user clicks on the image (if not given, a disparity map will be estimated).
 %   -gammaOptions: (Optional) Cell array of the form {isLinear, gammaOffset}. Use isLinear=true if gammaCorrection is needed / gammaOffset: offset parameter to apply after gamma correction (only used if isLinear is true).
+%   -useGPU : (Optional) true(default): use GPU acceleration if a CUDA Device is available and matlab's parallel processing toolbox is active. / false: CPU only.
 %
 % 2-From a file:
 %RenderAppMain('path/filename.fdl');
@@ -25,8 +26,10 @@
 % - Change aperture radius, polygonal aperture shape, angle and thickness (--> sliders).
 % - Show disparity map (--> 'd' key).
 % - Show render in the Fourier domain (i.e. skip inverse transform) (--> space key).
+% - Display rendered image in a separate figure (--> ctrl+space).
+% - Save image or FDL model (--> menu bar).
 
-function gui = RenderAppMain(FDL, fullSize, crop, Disps, U,V, DispMap, gammaOptions)
+function gui = RenderAppMain(FDL, fullSize, crop, Disps, U,V, DispMap, gammaOptions, useGPU)
 
 
     if(nargin==0)
@@ -55,10 +58,11 @@ function gui = RenderAppMain(FDL, fullSize, crop, Disps, U,V, DispMap, gammaOpti
             gammaOffset = gammaOptions{2};
         end
     end
+    if(~exist('useGPU','var')), useGPU=true;end
     
     
 %%%%%%%%%%%%%%%%%%%%%%%%%%
-    rMod = RenderModel(FDL, fullSize, crop, Disps, DispMap, isLinear, gammaOffset);
+    rMod = RenderModel(FDL, fullSize, crop, Disps, DispMap, isLinear, gammaOffset, useGPU);
     gui = RenderGUI(rMod, Disps, U, V);
     if(exist('path','var')), gui.defaultSaveFolder = path;end
     
