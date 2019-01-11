@@ -1,5 +1,5 @@
 LFDir = [fileparts(mfilename('fullpath')) '/'];
-gpuInit = true;%true -> use gpu for initilisation (Windowing + Fourier Transform of input views).
+useGPU = parallel.gpu.GPUDevice.isAvailable;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%  Input Light Field parameters %
@@ -55,7 +55,7 @@ fullResY = padSizeY*2+imgSize(1);
 %window profile:
 if(Windowing)
     Window = single(GenerateWindowIntensity(fullResX,fullResY,padSizeX,padSizeY, 'hann'));
-    if(gpuInit), Window = gpuArray(Window);end
+    if(useGPU), Window = gpuArray(Window);end
 end
 
 
@@ -66,7 +66,7 @@ tic;fprintf('Computing Fourier Transform of input views...');
 for l=1:numInitViews
     idView = InitViewIds(l);
     
-    if(gpuInit)
+    if(useGPU)
         orgPad = gpuArray(padarray(single(LF(:,:,:,idView)),[padSizeY padSizeX],padType));
     else
         orgPad = padarray(single(LF(:,:,:,idView)),[padSizeY padSizeX],padType);
@@ -75,7 +75,7 @@ for l=1:numInitViews
         orgPad = bsxfun(@times, orgPad, Window);
     end
     
-    if(gpuInit)
+    if(useGPU)
         ViewsFFT(l,:,:,:) = gather(permute(fftshift(fftshift(fft2(orgPad),1),2),[3 1 2]));
     else
         for ch=1:nChan, ViewsFFT(l,ch,:,:) = fftshift(fft2(orgPad(:,:,ch))); end
@@ -88,14 +88,22 @@ clear Window orgPad
 
 %% FDL Calibration
 tic;fprintf('FDL Calibration...');
-[Px,Py,U,V,D,~,~,~,~,~,residN2,gradN2]=CalibrateFDL_UVD_gpu(ViewsFFT, wx, wy, numLayers, lambdaCalib);
+if(useGPU)
+    [Px,Py,U,V,D,~,~,~,~,~,residN2,gradN2]=CalibrateFDL_UVD_gpu(ViewsFFT, wx, wy, numLayers, lambdaCalib);
+else
+    [Px,Py,U,V,D,~,~,~,~,~,residN2,gradN2]=CalibrateFDL_UVD_cpu(ViewsFFT, wx, wy, numLayers, lambdaCalib);
+end
 [U,V,D]=ScaleParams(U,V,D,nU,nV); %Scaling and centering of the parameters to match approximately an integer grid of views (this step has no effect on the final images).
 t=toc;fprintf(['\b(' num2str(t) 's)\n']);
 
 %% FDL Construction
 tic;fprintf('FDL Construction...');
-FDL = ComputeFDL_gpu(ViewsFFT, wx, wy, U, V, D, lambdaConstruct);
+if(useGPU)
+    FDL = ComputeFDL_gpu(ViewsFFT, wx, wy, U, V, D, lambdaConstruct);
+else
+    FDL = ComputeFDL_cpu(ViewsFFT, wx, wy, U, V, D, lambdaConstruct);
+end
 t=toc;fprintf(['(' num2str(t) 's)\n']);
 
 %% Start Rendering Application
-RenderAppMain(FDL, [fullResY,fullResX], [padSizeX, padSizeX, padSizeY, padSizeY], D,U,V, [],{linearizeInput,gammaOffset});
+RenderAppMain(FDL, [fullResY,fullResX], [padSizeX, padSizeX, padSizeY, padSizeY], D,U,V, [],{linearizeInput,gammaOffset}, useGPU);
