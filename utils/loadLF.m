@@ -7,6 +7,14 @@
 % - vRange : indices of v.
 % - crop : vector of the form [CropLeft,CropRight,CropTop,CropBottom].
 % - rescale : (default=1) Scaling factor to apply to the light field.
+%
+% Ouput:
+% - LF: Light Field image data in a 5D array with dimensions:
+%   1. Vertical spatial axis (Y)
+%   2. Horizontal spatial axis (X)
+%   3. Color components
+%   4. Vertical angular axis (V)
+%   5. Horizontal angular axis (U);
 
 function LF = loadLF(path, LFnamePrefix, fileExt, uRange, vRange, crop, rescale)
 
@@ -15,7 +23,7 @@ if(~exist('rescale','var')||isempty(rescale)),rescale=1;end
 
 fDir = dir([path '/']);
 
-IntiData=true;
+InitData=true;
 idxU=1;
 for u=uRange
     idxV=1;
@@ -38,12 +46,13 @@ for u=uRange
             TmpImg=imresize(TmpImg, rescale);
         end
         
-        if(IntiData)
-            LF = zeros([size(TmpImg),length(vRange),length(uRange)],class(TmpImg));
+        if(InitData)
+            sz = size(TmpImg); sz(end+1:3) = 1;
+            LF = zeros([sz,length(vRange),length(uRange)],class(TmpImg));
+            InitData=false;
         end
         LF(:,:,:,idxV,idxU) = TmpImg;
         
-        IntiData=false;
         idxV = idxV+1;
     end
     idxU = idxU+1;

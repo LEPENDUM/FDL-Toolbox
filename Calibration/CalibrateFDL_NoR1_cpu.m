@@ -1,12 +1,15 @@
 % Gradient-descent based Calibration from a relaxed version of the FDL
 % model with no Rank-1 constraint on the parameter matrix (containing the
 % shift of each layer to reconstruct each view).
-% Note: FDL constructed from this relaxed model are only suitable to
+% Note 1: FDL constructed from this relaxed model are only suitable to
 % reconstruct images at the same view positions as the input views (e.g.
-% for denoising).
+% for denoising or spatial super-resolution).
+% Note 2: It is recommended to initialise the matrices of parameters using
+% the calibration results of the rank 1 constrained calibration
+% (CalibrateFDL_UVD_xxx functions).
 %
 %Inputs:
-% - ViewsFFT : Fourier Transform of input views with dimensions : (#views, #color channels, Y resolution, X resolution).
+% - ViewsFFT : Fourier Transform of input views with dimensions: 1.Views, 2.Color channels, 3.Vertical axis (Y), 4.Horizontal axis (X).
 % - wx,wy : Horizontal and vertical frequency values associated to each frequency component in ViewsFFT. Dimensions = (Y resolution, X resolution).
 % - numDisp: Number of disparity values (i.e. number of layers).
 % - lambda : Regularization parameter (typical value = 1).
@@ -21,6 +24,8 @@
 % variation over a given number of iterations (numIterSigError) after the convergence criterion is reached.
 % - residN2 : Squared residual at each iteration.
 % - gradN2 : Squared gradient norm for D, U and V at each iteration.
+
+% See also : CalibrateFDL_UVD_cpu
 
 function [Px,Py,U,V,D,sigPx,sigPy,residN2,gradN2,gX,gY] = CalibrateFDL_NoR1_cpu(ViewsFFT,wx,wy,numDisp,lambda,PxInit,PyInit)
 

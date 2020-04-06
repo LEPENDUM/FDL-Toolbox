@@ -1,10 +1,141 @@
 %Main class for light field rendering from the FDL model.
-%Usage example:
-% rMod = RenderModel(FDL, fullSize, crop, Disps, 0);
-% rMod.setRadius(r);
-% rMod.setFocus(f);
-% rMod.renderImage();
-% figure,imshow(rMod.Image);
+%--------------------------------------------------------------------------
+%
+% The RenderModel object constructor has the following arguments:
+%
+% -FDL:
+%	Fourier Disparity Layers (in the Fourier Domain) given as a complex array with dimensions 1.Vertical axis (Y), 2.Horizontal axis (X), 3.Color channels, 4.Layers.
+%	Only left half of the spectrum (i.e. negative or null horizontal frequencies) may be given.
+%
+% -fullSize:
+%	Full image size in the format [verticalResolution, horizontalResolution], including the padded borders.
+%	The horizontal resolution may be different from the size of the 2nd dimension of the input FDL array if it only contains half of the spectrum.
+%	
+% -crop:
+%	Number of pixels to crop (to remove the padded borders) on each side of the image : [left, right, top, bottom].
+%	Alternatively, a BorderParams object can be given with the fields L,R,T,B respectively used for left, right, top and bottom crop.
+%
+% -Disps :
+%	Vector of disparity values associated with the layers.
+%	The number of elements must be the same as the number of layers (size of the 4th dimension of the input FDL array).
+%
+% -DispMap (Optional, empty by default):
+%	Disparity map (used by GUI application for refocusing automatically when the user clicks on the image).
+%   If empty or not specified, a disparity map will be estimated.
+%   Can be set to any scalar value to skip disparity estimation.
+%
+% -isLinear (Optional, false by default):
+%	Set to true to apply gamma correction after rendering.
+%
+% -gammaOffset (Optional, 0 by default
+%	Offset parameter to apply after gamma correction (only used if isLinear is true).
+%
+% -useGPU (Optional, true by default):
+%	true-> use GPU acceleration if a CUDA Device is available and matlab's parallel processing toolbox is active.
+%	false-> CPU only.
+%
+%--------------------------------------------------------------------------
+%
+% The methods available in the RenderModel class are:
+%
+% - obj.renderImage()
+%		Renders the image with the current RenderModel's parameters (e.g. focus, aperture parameters).
+%		The rendered image can be accessed either with the property obj.Image (uint8 format with cropped borders), or with the method obj.getInternalImage (see method documentation).
+%
+% - obj.computeAperture()
+%		Updates the internal representation of the aperture with the current aperture parameters (e.g. shape type, thickness, number of blades for polygon shape).
+%		This method must be called before rendering the image (i.e. call to obj.renderImage) if aperture parameters are changed (i.e. call to the methods with names starting with setAp) to take the changes into account in the final render.
+%
+% - obj.setSkipInvTr(skipInvTr)
+%		Set the skipInvTr property to true or false:
+%			-true-> Skip the inverse Fourier transform when rendering the image (the rendered image in obj.Image gives a visual representation of the Fourier magnitude spectrum).
+%			-false-> Apply inverse Fourier Transform when rendering the image.
+%		skipInvTr is set to false by default when constructing a RenderModel object.
+%
+% - obj.getInternalImage(applyCrop)
+%		Outputs the rendered image used internally (in floating point format).
+%		The input argument applyCrop (false by default) can be set to true to apply the cropping operation on the output image (defined by the crop property of the RenderModel object).
+%		If the skipInvTr property is true, the ouput image is the complex Fourier domain representation of the rendered image (and no cropping is applied even if applyCrop is set to true).
+%
+% - obj.saveFDL(filename,U,V)
+%		Save the FDL model (layers with disparity values and dimension variables) in the file given in filename argument (uses the matlab mat file system).
+%		
+%		Optionally, a list of angular coordinates defined by the input vectors U (horizontal coordinates) and V (vertical coordinates) can be saved in the same file (e.g. coordinates of the views used for the FDL construction).
+%
+% - obj.setRadius(radius)
+%		Set the aperture radius of the image to render (relative to the scale of the camera plane defined by the angular coordinates used as parameters for FDL construction).
+%		A value of 0 can be used to render images with full depth of field (simulate pinhole aperture).
+%		The meaning of the radius depends on the aperture type (see below for a description of aperture types).
+%		The focus parameter can be accessed for reading with the property obj.radius (set to 0 for a default RenderModel object).
+%
+% - obj.setFocus(focus)
+%		Set the focus parameter of the image to render (relative to the disparity values of the FDL model).
+%		The focus parameter can be accessed for reading with the property obj.s (set to 0 for a default RenderModel object).
+%
+% - obj.setPosition(u,v)
+%		Set the angular coordinates of the image to render (relative to the scale of the camera plane defined by the angular coordinates used as parameters for FDL construction).
+%		The angular coordinates can be accessed for reading with the properties obj.u0 and obj.v0 (both set to 0 for a default RenderModel object).
+%
+% - obj.setApShape(ApShapeName)
+%		Set the aperture shape type by its name.
+%		See below for a description of aperture types and corresponding names.
+%		The aperture shape type can be accessed for reading by its index with the property obj.ApShapeId (set to 1 (polygon type) for a default RenderModel object).
+%		The method obj.computeAperture must be called before rendering the image to take the new value into account.
+%
+% - obj.setApShapeId(ApShapeId)
+%		Set the index of the aperture shape type.
+%		See below for a description of aperture types and corresponding indices.
+%		The aperture shape index can be accessed for reading with the property obj.ApShapeId (set to 1 (polygon type) for a default RenderModel object).
+%		The method obj.computeAperture must be called before rendering the image to take the new value into account.
+%
+% - obj.setApThickness(apThickness)
+%		Set the aperture thickness: value form 0 (only the border of the shape) to 1 (full shape).
+%		The aperture thickness can be accessed for reading with the property obj.apThickness (set to 1 for a default RenderModel object).
+%		The method obj.computeAperture must be called before rendering the image to take the new value into account.
+%
+% - obj.setApAngle(apAngle)
+%		Set the rotation angle of the aperture shape (in radians).
+%		The rotation angle can be accessed for reading with the property obj.apAngle (set to 0 for a default RenderModel object).
+%		The method obj.computeAperture must be called before rendering the image to take the new value into account.
+%
+% - obj.setNumBlades(numBlades)
+%		Set the number of blades parameter (number of sides of the polygon, in the case of a polygon aperture shape type). The minimum value is 3.
+%		The rotation angle can be accessed for reading with the property obj.numBlades (set to 5 for a default RenderModel object).
+%		The method obj.computeAperture must be called before rendering the image to take the new value into account.
+%
+%--------------------------------------------------------------------------
+%
+% Aperture types:
+%	- 'polygon' (ApShapeId=1) : Regular polygon aperture.
+%		The radius parameter coresponds to the radius of the circumscribed circle of the polygon.
+%		Note 1: The 'polygon' type has similar effect to the 'disk' or 'ring' types when the number of blades is large.
+%		Note 2: When numblades=4, the effect of the 'polygon' type differs from the 'rect' because of the definition of the radius. 
+%
+%	- 'disk' (ApShapeId=2): Perfect disk.
+%		The aperture radius parameter coresponds to the radius of the disk.
+%		Angle, thickness and number of blades parameters have no effect for this aperture type.
+%
+%	- 'ring' (ApShapeId=3): Ring aperture.
+%		Similar to the disk aperture but the aperture thickness parameter can be used to control the thickness of the ring (small thickness values increase the radius of the inner circle).
+%		The 'ring' type approximates the 'disk' type when the thickness parameter is 1.
+%
+%	- 'rect' (ApShapeId=4): Square aperture.
+%		The radius parameter corresponds to the half side length of the square.
+%		The thickness and number of blades parameters have no effect for this aperture type.
+%
+%--------------------------------------------------------------------------
+%
+% Usage example:
+% rMod = RenderModel(FDL, fullSize, crop, Disps, 0);% Initialise the RenderModel object with a FDL (disable disparity estimation using a dummy value 0 for the disparity map argument).
+% rMod.setApShape('disk');	%Configure disk aperture shape.
+% rMod.setRadius(5);		%Configure aperture radius parameter.
+% rMod.setFocus(2);			%Configure focus parameter.
+% rMod.computeAperture();	%Computes the aperture shape (needed because of the call to setApShape).
+% rMod.renderImage();  		%Render the image.
+% figure,imshow(rMod.Image);%Display the final image (in uint8 format).
+%--------------------------------------------------------------------------
+%
+% See also RenderAppMain
 
 classdef RenderModel < Observable
 %Note: inherits from the custom class Observable instead of the built-in
@@ -75,16 +206,6 @@ classdef RenderModel < Observable
 %}
     
     methods
-        
-        %Constructor with parameters:
-        % -FDL   : Fourier Disparity layers (only left half of the spectrum (i.e. negative or null horizontal frequencies) may be given).
-        % -fullSize : full image size in the format [verticalResolution, horizontalResolution], including the padded borders.
-        % -crop  : number of pixels to crop (to remove the padded borders) on each side of the image : [top, bottom, left, right].
-        % -Disps : list of disparity values associated with each layer.
-        % -DispMap: (Optional) Disparity map used for refocusing automatically when the user clicks on the image (if not given, a disparity map will be estimated).
-        % -isLinear: (Optional) Set to true if gammaCorrection is needed.
-        % -gammaOffset: (Optional) offset parameter to apply after gamma correction (only used if isLinear is true).
-        % -useGPU : (Optional) true(default): use GPU acceleration if a CUDA Device is available and matlab's parallel processing toolbox is active. / false: CPU only.
         function obj = RenderModel(FDL, fullSize, crop, Disps, DispMap, isLinear, gammaOffset, useGPU)
             
             if(nargin==0)
@@ -110,14 +231,18 @@ classdef RenderModel < Observable
             [wx,wy] = meshgrid(1:fullSize(2),1:fullSize(1));
             obj.xC = ceil((fullSize(2)+1)/2);
             obj.yC = ceil((fullSize(1)+1)/2);
-            wx=single((wx(:,1:obj.xC)-obj.xC)/(fullSize(2)-1));
-            wy=single((obj.yC-wy(:,1:obj.xC))/(fullSize(1)-1));
+            wx=single((wx(:,1:obj.xC)-obj.xC)/(fullSize(2)));
+            wy=single((obj.yC-wy(:,1:obj.xC))/(fullSize(1)));
 
             nChan = size(FDL,3);
             numDisp = length(Disps);
             obj.even_fft = 1-mod(fullSize(1:2),2);
-            obj.crop = crop;
-
+            if(isa(crop,'BorderParams'))
+                obj.crop = [crop.L,crop.R,crop.T,crop.B];
+            else
+                obj.crop = crop;
+            end
+            
             %Prepare data for single precision format and GPU if needed.
             if(obj.usingGPU)
                 obj.FDL = gpuArray(single(FDL(:,1:obj.xC,:,:)));
@@ -203,30 +328,30 @@ classdef RenderModel < Observable
         
         %Image render function
         function renderImage(obj)
-            %Render first half of the spectrum
+            %Render first half of the spectrum.
             if(obj.usingGPU)
                 obj.Image_(:,1:obj.xC,:) = RenderHalfFT(obj.FDL, obj.wx, obj.wy, obj.Disps, obj.Apfft, obj.dWu, obj.dWv, obj.uC, obj.vC, obj.s, obj.radius, obj.u0, obj.v0);
             else
                 obj.Image_(:,1:obj.xC,:) = RenderHalfFT_cpu(obj.FDL, obj.wx, obj.wy, obj.Disps, obj.Apfft, obj.dWu, obj.dWv, obj.uC, obj.vC, obj.s, obj.radius, obj.u0, obj.v0);
             end
-            %Reconstruct second half of the spectrum using symmetries
-            obj.Image_(obj.yC+1:end,obj.xC+1:end,:) = conj(obj.Image_(obj.yC-1:-1:1+obj.even_fft(1),obj.xC-1:-1:1+obj.even_fft(2),:,:));
-            obj.Image_(1+obj.even_fft(1):obj.yC, obj.xC+1:end,:) = conj(obj.Image_(end:-1:obj.yC, obj.xC-1:-1:1+obj.even_fft(2),:,:));
-             
-            if(obj.skipInvTr)
-                obj.Image_ = abs(obj.Image_)/50;
-                %obj.Image_ = cat(3,real(obj.Image_(:,:,2)),imag(obj.Image_(:,:,2)),abs(obj.Image_(:,:,2)))/50;
-            else
-            %Apply inverse Fourier Transform
-                obj.Image_ = ifft2(ifftshift(ifftshift(obj.Image_,1),2));
-            end
-
-%%%%%%%%%%%%%
-            if(obj.isLinear)
-                obj.Image_(1+obj.crop(3):end-obj.crop(4),1+obj.crop(1):end-obj.crop(2),:) = RenderModel.BT709_gamma(obj.Image_(1+obj.crop(3):end-obj.crop(4),1+obj.crop(1):end-obj.crop(2),:))-obj.gammaOffset;
-            end
-            obj.Image = gather( real(uint8(255*obj.Image_(1+obj.crop(3):end-obj.crop(4),1+obj.crop(1):end-obj.crop(2),:))));
             
+            if(obj.skipInvTr)
+                %Reconstruct second half of the spectrum using symmetries.
+                obj.Image_(obj.yC+1:end,obj.xC+1:end,:) = conj(obj.Image_(obj.yC-1:-1:1+obj.even_fft(1),obj.xC-1:-1:1+obj.even_fft(2),:,:));
+                obj.Image_(1+obj.even_fft(1):obj.yC, obj.xC+1:end,:) = conj(obj.Image_(end:-1:obj.yC, obj.xC-1:-1:1+obj.even_fft(2),:,:));
+                %render the fourier magnitude spectrum (only for display, the true fourier transform remains in the internal image representation (i.e. obj.Image_).
+                obj.Image = gather( real(uint8(abs(obj.Image_(1+obj.crop(3):end-obj.crop(4),1+obj.crop(1):end-obj.crop(2),:)*255*10000/size(obj.Image_,1)/size(obj.Image_,2)))));
+            else
+                %Apply inverse Fourier Transform directly from the half spectrum.
+                obj.Image_ = ifft(conj(fliplr(ifft(ifftshift(obj.Image_(:,1:obj.xC,:),1),[],1))),size(obj.Image_,2),2,'symmetric');
+                
+                if(obj.isLinear)
+                %Apply gamma correction if needed.
+                    obj.Image_(1+obj.crop(3):end-obj.crop(4),1+obj.crop(1):end-obj.crop(2),:) = RenderModel.BT709_gamma(obj.Image_(1+obj.crop(3):end-obj.crop(4),1+obj.crop(1):end-obj.crop(2),:))-obj.gammaOffset;
+                end
+                %Format conversion.
+                obj.Image = gather( uint8(255*obj.Image_(1+obj.crop(3):end-obj.crop(4),1+obj.crop(1):end-obj.crop(2),:)));
+            end
         end
         
         %Aperture update function
@@ -243,6 +368,16 @@ classdef RenderModel < Observable
             end
         end
         
+        %Get internal rendered image representation either with or without
+        %cropping the padded borders (no crop by default / if the inverse Fourier transform is skipped, the crop is never applied).
+        function I = getInternalImage(obj,applyCrop)
+            if(~exist('applyCrop','var')), applyCrop=false;end
+            if(applyCrop && ~obj.skipInvTr)
+                I = gather(obj.Image_(1+obj.crop(3):end-obj.crop(4),1+obj.crop(1):end-obj.crop(2),:));
+            else
+                I = gather(obj.Image_);
+            end
+        end
         
         %Set methods
         function setRadius(obj,radius)

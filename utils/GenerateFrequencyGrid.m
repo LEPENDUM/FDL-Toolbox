@@ -9,6 +9,6 @@ function [wx,wy,xC,yC] = GenerateFrequencyGrid(resX,resY)
     [wx,wy] = meshgrid(1:resX,1:resY);
     xC = ceil((resX+1)/2);
     yC = ceil((resY+1)/2);
-    wx=single((wx(:,1:end)-xC)/(resX-1));
-    wy=single((yC-wy(:,1:end))/(resY-1));
+    wx=single((wx(:,1:end)-xC)/resX);
+    wy=single((yC-wy(:,1:end))/resY);
 end

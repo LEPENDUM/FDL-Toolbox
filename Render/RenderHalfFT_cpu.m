@@ -22,7 +22,7 @@ absFact = abs(absFact);
 resY = size(FDL,1);
 resX = size(FDL,2);
 numDisp = size(FDL,4);
-Weigths = zeros(resY,resX,1,numDisp);
+Weigths = zeros(resY,resX,1,numDisp,'single');
 
 for k = 1:numDisp
     %Use the absolute value of fact_k=(s-Disp)*radius in order to use

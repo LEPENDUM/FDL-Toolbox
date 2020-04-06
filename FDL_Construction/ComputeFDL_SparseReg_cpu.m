@@ -2,7 +2,7 @@
 %The method uses ElasticNet regularization (both l1 and l2).
 %
 %Inputs:
-% - ViewsFFT : Fourier Transform of input views with dimensions : (#views, #color channels, Y resolution, X resolution).
+% - ViewsFFT : Fourier Transform of input views as a 4D array with dimensions : 1.Views, 2.Color channels, 3.Vertical axis (Y), 4.Horizontal axis (X).
 % - wx,wy : horizontal and vertical frequency values associated to each frequency component in ViewsFFT. Dimensions = (Y resolution, X resolution).
 % - U,V : Vectors of horizontal (U) and vertical (V) view positions.
 % - D :  Vector of disparity values.
@@ -12,7 +12,7 @@
 % - Py : (Optional) Matrix of parameters for the vertical dimension (default = outer product of V and D).
 %
 %Output:
-% FDL model (4D complex array : 2 spatial dimensions, color channels dimension, layers dimension).
+% FDL model (4D complex array with dimensions: 1.Vertical axis (Y), 2.Horizontal axis (X), 3.Color channels, 4.Layers.
 % The resulting layers are represented in the Fourier domain.
 
 function FDL = ComputeFDL_SparseReg_cpu(ViewsFFT, wx, wy, U, V, D, lambdaL1, lambdaL2,Px,Py)
