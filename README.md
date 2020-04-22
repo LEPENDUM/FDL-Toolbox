@@ -2,7 +2,7 @@
 
 ## Description
 
-This is the FDL toolbox providing matlab functions for Light Fields processing in the Fourier Disparity Layer representation [1].
+This is the FDL toolbox providing matlab functions for Light Fields processing in the Fourier Disparity Layer representation (see the [project page](https://v-sense.scss.tcd.ie/research/a-fourier-disparity-layer-representation-for-light-fields/)).
 
 The main features are listed here (detailed documentations of the referenced functions are available in the matlab (.m) files):
 
@@ -12,15 +12,18 @@ The main features are listed here (detailed documentations of the referenced fun
 	- Functions for 2D FFT and inverse FFT for a stack of images.
 	- Options for signal extension (padding and windowing of padded borders).
 	- Supports hexagonal sampling of the input images (e.g. RAW Lytro data).
+	
 - **refocusFFT** (both cpu and gpu):
 	- Fourier domain implementation of the "Shift and sum" light field refocusing algorithm.
 	
 ### 2. FDL Calibration algorithms (see ./Calibration):
+
 - **CalibrateFDL_UVD_cpu** and **CalibrateFDL_UVD_gpu**:
 	- Gradient descent based calibration to determine view positions on the camera plane (U, V) and disparity values (D) of the layers (see algorithm description in the TIP 2019 paper [1]).
 	- Support for independent U,V,D parameters per color channel (e.g. for chromatic aberration estimation).
 	- Options for estimating only D knowing U,V, or only U,V knowing D.
 	- Options for improved robustness (e.g. see 'UseSignFlip', 'numIterLowFreqs' options in the function documentation).
+	
 - **CalibrateFDL_NoR1_cpu** and **CalibrateFDL_NoR1_gpu**:
 	- Calibration with a relaxed version of the FDL model with no Rank-1 constraint on the parameter matrix containing the shift of each layer to reconstruct each view (see details in [1]).
 	- FDL constructed from this relaxed model are only suitable to reconstruct images at the same view positions as the input views (e.g. for denoising or spatial super-resolution).
@@ -28,24 +31,29 @@ The main features are listed here (detailed documentations of the referenced fun
 
 
 ### 3. FDL construction algorithms (see ./FDL_Construction/):
+
 - **ComputeFDL_cpu** and **ComputeFDL_gpu**: 
 	- Simple FDL construction from the TIP 2019 paper [1].
 	- Use l2 and 2nd order view regularisation.
+	
 - **ComputeFDL_SparseReg_cpu** (cpu only): 
 	- Other version of the FDL contruction. 
 	- Use l1 and l2 regularisation.
+	
 - **ComputeFDL_SuperRes_gpu** (gpu only):
 	-  Super-resolution algorithm from the ICCP 2020 paper [2].
 	- Supports hexagonal input sampling (e.g. RAW Lytro data).
 	- Supports color regularisation to reduce color noise/artifacts (see details in [2]).
 	- Supports spatial and angular preconditioning (see details in [2] for spatial pre-conditioning).
 	- This method can also be used for FDL construction without super-resolution (super-resolution factor = 1).
+	
 - **FDL_Complete_SuperRes** (gpu only):
 	- Completion algorithm from the ICCP 2020 paper [2]:
 	- Supports all the tools from the super-resolution algorithm (e.g. completion jointly with super-resolution and color regularisation for demosaicing).
 
 
 ### 4. Interactive Light Field Rendering application from a FDL model (see ./Render):
+
 -  **RenderModel** (both cpu and gpu)
 	- Class for  fast light field rendering from a FDL model.
 	- Control of viewpoint, focus, aperture shape, aperture size.
@@ -59,6 +67,7 @@ The main features are listed here (detailed documentations of the referenced fun
 	- Possibility to save the FDL model (using mat file system).
 
 ### 5. Example application scripts (see ./Demo):
+
 - **Demo_FDL_Simple** (both cpu and gpu)
 	- Demo script showing an example usage of the FDL processing chain (method without super-resolution from [1]):
 	- Loads views, apply Fourier Transform, FDL calibration, FDL construction and launch Rendering GUI.
