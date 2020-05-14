@@ -3,13 +3,13 @@
 %
 %---------------------------  Inputs arguments ----------------------------
 % - Views:
-%     4D Array of incomplete and low resolution Light Field views in the pixel domain
-%     with dimensions: 1.Vertical axis (Y), 2.Horizontal axis (X), 3.Color channels, 4.Views.
+%       4D Array of incomplete and low resolution Light Field views in the pixel domain
+%       with dimensions: 1.Vertical axis (Y), 2.Horizontal axis (X), 3.Color channels, 4.Views.
 %
 % - Mask:
-%     Binary Mask of known (true) and unknown (false) pixels.
-%     The spatial resolution (first two dimensions) must be the same as in the 'Views' array.
-%     The other dimensions (Views, Color channels) can be either the same as
+%       Binary Mask of known (true) and unknown (false) pixels.
+%       The spatial resolution (first two dimensions) must be the same as in the 'Views' array.
+%       The other dimensions (Views, Color channels) can be either the same as
 %       the 'Views' array (e.g. different mask for each view and/or channel).
 %       or singleton dimensions (same mask for all the views and/or channel).
 %
@@ -22,11 +22,11 @@
 %       The dimensions of D can be (1 x #layers) or (1 x #layers x #channels) to use different view positions for each color channel.
 %
 %  -lambda:
-%      l2 regularization parameter.
+%       l2 regularization parameter.
 %
 %  -SRFact (default=1):
-%      Super-resolution factor: SRFact(1) = horizontal factor.
-%                               SRFact(2) = vertical factor (if not defined, same as horizontal factor).
+%       Super-resolution factor: SRFact(1) = horizontal factor.
+%                                SRFact(2) = vertical factor (if not defined, same as horizontal factor).
 %
 %  -dwnFilt (default=0):
 %      Spatial filter for deconvolution. It must be specified as follows:
@@ -74,8 +74,9 @@
 %       -freqBlockSz (default=1024):
 %           Number of frequencies processed in parallel.
 %           It may be adjusted to prevent 'out of memory' depending on available GPU memory, number of views, and number of layers.
+%       -nbImgGPU: Number of Images treated in parallel for GPU computation (default=50, may need adjustements depending on gpu memory available).
 %       -seqIterStep (default=0):
-%           -If seqIterStep > 0:  Generate sequence of images showing result of one view (with central index) at every 'outVideoStep' iteration.
+%           -If seqIterStep > 0:  Generate sequence of images showing result of one view (with central index) at every 'seqIterStep' iteration.
 %           -If seqIterStep <= 0: Skip image sequence generation (default option).
 %       -ViewsRef (default=[]):
 %           Reference Light field used to compute mean square error at each iteration (MSE is not computed if ViewsRef is empty or has wrong dimensions).
@@ -180,7 +181,7 @@ end
 if(seqIterStep>0)
     seqIterStep = round(seqIterStep);
     IterInfo.seqIterStep = seqIterStep;
-    IterInfo.seqIter = zeros(imgSize(1),imgSize(2),nChan,ceil(numIterMax/seqIterStep));
+    IterInfo.seqIter = zeros(imgSize(1),imgSize(2),nChan,ceil((numIterMax-1)/seqIterStep));
     computeVideo = true;
 else
     computeVideo = false;
@@ -235,7 +236,7 @@ for it=1:numIterMax
         IterInfo.MSE(it) = mean((ViewsRef(:)-real(F(:))).^2);
     end
     if(computeVideo && mod(it-1,seqIterStep)==0)
-        IterInfo.seqIter(:,:,:,ceil(it/seqIterStep)) = permute(real(F(ceil(numImages/2),:,:,:)),[3 4 2 1]);
+        IterInfo.seqIter(:,:,:,ceil(it/seqIterStep)) = F(:,:,:,ceil(numImages/2));
     end
     
     if(it<numIterMax)

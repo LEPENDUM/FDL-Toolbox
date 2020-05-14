@@ -2,8 +2,8 @@
 %
 %-Inputs:
 %   - Imgs:  Set of images given as a 4D array.
-%			 By default the dimensions must be in the order: 1.Vertical axis (Y), 2.Horizontal axis (X), 3.Color components, 4.Images,
-%			  but any permutation of the dimensions can be used by specifying the 'dimsOrderOut' optional argument.
+%            By default the dimensions must be in the order: 1.Vertical axis (Y), 2.Horizontal axis (X), 3.Color components, 4.Images,
+%            but any permutation of the dimensions can be used by specifying the 'dimsOrderOut' optional argument.
 %   - borderParams (optional): object of class BorderParams defining the parameters for padding and windowing of padded borders. The properties used are:
 %       - L: padding on the left side (default=0).
 %       - R: padding on the right side (default=0).
@@ -16,19 +16,19 @@
 %           - 'linear' -> use linear window type for padded borders.
 %  -varargin: Additional optional arguments given as (Name,Value) pairs:
 %       - dimsOrderIn (default=[1 2 3 4]): Order of the input dimensions indicated as a permutation of the vector [1 2 3 4] where:
-%			1 represents the vertical axis (Y).
-%			2 represents the horizontal axis (X).
-%			3 represents the dimension of color components.
-%			4 represents the dimension of the image set.
+%           1 represents the vertical axis (Y).
+%           2 represents the horizontal axis (X).
+%           3 represents the dimension of color components.
+%           4 represents the dimension of the image set.
 %         e.g. use dimsOrderIn=[4 3 1 2] for an input array of size (#Images x #Color Components x Vertical Resolution x Horizontal Resolution).
-%		- dimsOrderOut (equal to dimsOrderIn by default): Order of the output dimensions (same format as 'dimsOrderIn').
+%       - dimsOrderOut (equal to dimsOrderIn by default): Order of the output dimensions (same format as 'dimsOrderIn').
 %       - disableGPU: Set to true to disable GPU, even if a compatible GPU is available (default=false).
 %       - nbImgGPU: Number of Images treated in parallel for GPU computation (default=32, may need adjustements depending on gpu memory available).
 %
 %-Output:
 %  - ImgsPad: Array of padded and transformed images.
-%		   	  By default the dimensions are in the order: 1.Vertical axis (Y), 2.Horizontal axis (X), 3.Color components, 4.Images,
-%			   but any permutation of the dimensions can be obtained by specifying the 'dimsOrderOut' optional argument.
+%             By default the dimensions are in the order: 1.Vertical axis (Y), 2.Horizontal axis (X), 3.Color components, 4.Images,
+%             but any permutation of the dimensions can be obtained by specifying the 'dimsOrderOut' optional argument.
 
 % See also : fftImgs, BorderParams
 

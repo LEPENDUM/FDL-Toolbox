@@ -3,9 +3,9 @@
 % of the padded borders) before applying the Fourier transform.
 %
 %-Inputs:
-%   - Imgs:  Set of images in pixel domain given as a 4D array.
-%			 By default the dimensions must be in the order: 1.Vertical axis (Y), 2.Horizontal axis (X), 3.Color components, 4.Images,
-%			  but any permutation of the dimensions can be used by specifying the 'dimsOrderOut' optional argument.
+%   - Imgs: Set of images in pixel domain given as a 4D array.
+%           By default the dimensions must be in the order: 1.Vertical axis (Y), 2.Horizontal axis (X), 3.Color components, 4.Images,
+%           but any permutation of the dimensions can be used by specifying the 'dimsOrderOut' optional argument.
 %   - borderParams (optional): Object of class BorderParams defining the parameters for padding and windowing of padded borders. The properties used are:
 %       - L: padding on the left side (default=0).
 %       - R: padding on the right side (default=0).
@@ -17,13 +17,13 @@
 %           - 'hann' (default) -> use hann window type for padded borders.
 %           - 'linear' -> use linear window type for padded borders.
 %  -varargin: Additional optional arguments given as (Name,Value) pairs:
-%		- dimsOrderIn (default=[1 2 3 4]): Order of the input dimensions indicated as a permutation of the vector [1 2 3 4] where:
-%			1 represents the vertical axis (Y).
-%			2 represents the horizontal axis (X).
-%			3 represents the dimension of color components.
-%			4 represents the dimension of the image set.
+%       - dimsOrderIn (default=[1 2 3 4]): Order of the input dimensions indicated as a permutation of the vector [1 2 3 4] where:
+%           1 represents the vertical axis (Y).
+%           2 represents the horizontal axis (X).
+%           3 represents the dimension of color components.
+%           4 represents the dimension of the image set.
 %         e.g. use dimsOrderIn=[4 3 1 2] for an input array of size (#Images x #Color Components x Vertical Resolution x Horizontal Resolution).
-%		- dimsOrderOut (equal to dimsOrderIn by default): Order of the output dimensions (same format as 'dimsOrderIn').
+%       - dimsOrderOut (equal to dimsOrderIn by default): Order of the output dimensions (same format as 'dimsOrderIn').
 %       - hexaSampling : Value indicating the sampling format of the input images:
 %           -0 (default): Square sampling (use normal 2D FFT).
 %           -1: Hexagonal sampling where rows with odd indices are shifted to the left by half a pixel (where indices start at 1 for the top row of the images excluding padded borders).
@@ -34,8 +34,8 @@
 %
 %-Output:
 %  - ImgsFFT: Array of padded and transformed images.
-%		   	  By default the dimensions are in the order: 1.Vertical axis (Y), 2.Horizontal axis (X), 3.Color components, 4.Images,
-%			   but any permutation of the dimensions can be obtained by specifying the 'dimsOrderOut' optional argument.
+%             By default the dimensions are in the order: 1.Vertical axis (Y), 2.Horizontal axis (X), 3.Color components, 4.Images,
+%             but any permutation of the dimensions can be obtained by specifying the 'dimsOrderOut' optional argument.
 
 % See also : ifftImgs, padImgs, BorderParams
 

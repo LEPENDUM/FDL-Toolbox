@@ -16,11 +16,11 @@
 %       The dimensions of D can be (1 x #layers) or (1 x #layers x #channels) to use different view positions for each color channel.
 %
 %  -lambda:
-%      l2 regularization parameter.
+%       l2 regularization parameter.
 %
 %  -SRFact:
-%      Super-resolution factor: SRFact(1) = horizontal factor.
-%                               SRFact(2) = vertical factor (if not defined, same as horizontal factor).
+%       Super-resolution factor: SRFact(1) = horizontal factor.
+%                                SRFact(2) = vertical factor (if not defined, same as horizontal factor).
 %
 %  -dwnFilt:
 %      Spatial filter for deconvolution. It must be specified as follows:
@@ -148,7 +148,7 @@ if(isempty(SRFactPrecond))
 else
     SRFactPrecondX = SRFactPrecond(1);
     if(numel(SRFactPrecond)>1)
-        SRFactPrecondY = SRFact(2);
+        SRFactPrecondY = SRFactPrecond(2);
     else
         SRFactPrecondY = SRFactPrecondX;
     end
@@ -384,7 +384,7 @@ for freqSt=1:freqBlockSz:numFreqProc
     if(~doBackProj)
         clear FiltModel
     end
-    if(~HR_Output || outputFDL)
+    if(~HR_Output)
         clear FiltPrecond
     end
     
@@ -458,6 +458,7 @@ for freqSt=1:freqBlockSz:numFreqProc
 %Output = high resolution FDL.
         FDL_gpu = reshape(FDL_gpu,numDisp,numCoeff,nChan,[]);
         FDL_gpu = numCoeff*bsxfun(@times,FDL_gpu,coeffs);%Adjustments necessary for the High resolution output (factor numCoeff / apply coeffs of super-resolution mask).
+        FDL_gpu = bsxfun(@times,FDL_gpu,permute(FiltPrecond,[2,4,3,5,1]));
         OutputFT(:,:,:,freqList) = gather(FDL_gpu);
     else
 %Output = low resolution views.

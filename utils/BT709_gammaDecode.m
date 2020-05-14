@@ -1,4 +1,4 @@
-%Apply BT709 standard inverse gamma correction to convert sRGB gamma encoded data to linear BT709.
+%Apply BT709 standard inverse gamma correction to convert BT709 gamma encoded data to linear RGB.
 %(negative input values are clipped to 0).
 function Iout = BT709_gammaDecode(Iin)
 

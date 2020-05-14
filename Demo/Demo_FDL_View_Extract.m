@@ -7,9 +7,7 @@
 %
 %   Instructions:
 %   -1. Capture Lytro image or download RAW Lytro images from existing
-%   datasets e.g.:
-%   INRIA: http://clim.inria.fr/research/LowRank2/datasets/datasets.html
-%   EPFL:  https://jpeg.org/plenodb/lf/epfl/
+%   datasets (e.g.: <a href="matlab: web('http://clim.inria.fr/research/LowRank2/datasets/datasets.html')">INRIA Dataset</a>, <a href="matlab: web('https://jpeg.org/plenodb/lf/epfl/')">EPFL Dataset</a>).
 %
 %   -2. Convert RAW data (.LFR file) into incomplete views with the Light
 %   Field toolbox available here: 
@@ -54,9 +52,9 @@ if(~reload)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 lambdaCalib=1;          % Regularization parameter for FDL calibration.
 numIter = 30;           % Number of iteration of the FDL completion algorithm.
-lambdaCstrBase=0.06;    % l2 regularization parameter.
+lambdaCstrBase=0.03;    % l2 regularization parameter.
 lambdaColor = 1;        % Color regularization parameter.
-sigSpatial=.33;         % Spatial blur std. dev. (w.r.t low resolution image scale).
+sigSpatial=.4;          % Spatial blur std. dev. (w.r.t low resolution image scale).
 sigAngular=1.3;         % Angular blu std. dev. (assuming normalized baseline).
 scaleX = 2;             % Super-resolution horizontal scale
 scaleY = 2;             % Super-resolution vertical scale

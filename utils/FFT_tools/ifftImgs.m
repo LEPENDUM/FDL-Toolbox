@@ -8,24 +8,24 @@
 %
 %-Required Input:
 %   - Imgs: Set of images in the complex Fourier domain given as a 4D array.
-%			By default the dimensions must be in the order: 1.Vertical axis (Y), 2.Horizontal axis (X), 3.Color components, 4.Images,
-%			 but any permutation of the dimensions can be used by specifying the 'dimsOrderOut' optional argument.
-%   		The number of elements of the horizontal dimension can be ceil((ResX+1)/2) instead ResX since horizontal symmetry is exploited
-%			 (assuming the output signal is real). In this case, the function assumes that 'ImgsFFT' contains the left half of the spectrum
-%			 and the full horizontal resolution must be specified as the 'fullResX' argument.
+%           By default the dimensions must be in the order: 1.Vertical axis (Y), 2.Horizontal axis (X), 3.Color components, 4.Images,
+%           but any permutation of the dimensions can be used by specifying the 'dimsOrderOut' optional argument.
+%           The number of elements of the horizontal dimension can be ceil((ResX+1)/2) instead ResX since horizontal symmetry is exploited
+%           (assuming the output signal is real). In this case, the function assumes that 'ImgsFFT' contains the left half of the spectrum
+%           and the full horizontal resolution must be specified as the 'fullResX' argument.
 %   - borderParams (ptional): Object of class BorderParams defining the parameters for cropping the borders (previously padded before performing forward fft). The properties used are:
 %       - L: crop on the left side (default=0).
 %       - R: crop on the right side (default=0).
 %       - T: crop on the top (default=0).
 %       - B: crop on the bottom (default=0).
 %  -varargin: Additional optional arguments given as (Name,Value) pairs:
-%		- dimsOrderIn (default=[1 2 3 4]): Order of the input dimensions indicated as a permutation of the vector [1 2 3 4] where:
-%			1 represents the vertical axis (Y).
-%			2 represents the horizontal axis (X).
-%			3 represents the dimension of color components.
-%			4 represents the dimension of the image set.
+%       - dimsOrderIn (default=[1 2 3 4]): Order of the input dimensions indicated as a permutation of the vector [1 2 3 4] where:
+%           1 represents the vertical axis (Y).
+%           2 represents the horizontal axis (X).
+%           3 represents the dimension of color components.
+%           4 represents the dimension of the image set.
 %         e.g. use dimsOrderIn=[4 3 1 2] for an input array of size (#Images x #Color Components x Vertical Resolution x Horizontal Resolution).
-%		- dimsOrderOut (equal to dimsOrderIn by default): Order of the output dimensions (same format as 'dimsOrderIn').
+%       - dimsOrderOut (equal to dimsOrderIn by default): Order of the output dimensions (same format as 'dimsOrderIn').
 %       - fullResX: Full horizontal resolution (default=[], i.e. set automatically using size of 'ImgsFFT').
 %                   'fullResX' must be specified if the input images 'ImgsFFT' only contains the left half of the spectrum.
 %       - hexaSampling : Value indicating the sampling format for the output inverse transformed images:
@@ -38,8 +38,8 @@
 %
 %-Output:
 %  - Imgs: Array of Inverse transformed images.
-%		   By default the dimensions are in the order: 1.Vertical axis (Y), 2.Horizontal axis (X), 3.Color components, 4.Images,
-%			but any permutation of the dimensions can be obtained by specifying the 'dimsOrderOut' optional argument.
+%          By default the dimensions are in the order: 1.Vertical axis (Y), 2.Horizontal axis (X), 3.Color components, 4.Images,
+%          but any permutation of the dimensions can be obtained by specifying the 'dimsOrderOut' optional argument.
 
 % See also : fftImgs, BorderParams
 

@@ -66,6 +66,7 @@
 %--------------------------------------------------------------------------
 %
 % See also RenderModel
+
 function gui = RenderAppMain(FDL, fullSize, crop, Disps, U,V, DispMap, gammaOptions, useGPU)
 
 

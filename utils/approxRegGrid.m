@@ -4,7 +4,7 @@
 % - V: Vertical coordinates of input set of 2D points.
 % - GridU: Horizontal coordinates of set of 2D points to fit.
 % - GridV: Vertical coordinates of set of 2D points to fit.
-% U, V, UTheoric and IntGridV must have the same number of elements.
+%          U, V, GridU and GridV must have the same number of elements.
 %
 % Output
 % - delatU: Horizontal scale to apply to the (GridU,GridV) points to approximate the (U,V) points.
