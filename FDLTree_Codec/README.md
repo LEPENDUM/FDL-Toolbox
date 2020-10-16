@@ -5,12 +5,12 @@
 
 This directory contains the FDL Tree codec described in the paper [1].
 
-### Usage
+## Usage
 An example is provided in: `../Demo/Demo_FDLTree_Codec.m`
 
 Note: before encoding a light field with the FDL tree codec, a FDL model (layers and disparity values) must be generated with the FDL toolbox.
 
-#### Encoding
+### Encoding
 1. Convert the layers to spatial domain: `FDLspat = ifftImgs(FDL);`
 
 2. Define encoder's configuration parameters (e.g. HEVC QP, codec bitdepth, chroma format for YUV encoding...):
@@ -29,7 +29,7 @@ Note: before encoding a light field with the FDL tree codec, a FDL model (layers
 	```
 	This will generate subdirectories `bin` and `log` in the resDir containing respectively the binary files of the full encoded tree and the corresponding HEVC log files. The function also generates the reconstructed FDL Tree as output.
 
-#### Decoding / Reading
+### Decoding / Reading
 - To decode from binary files: use **DecodeFDLTree** specifying the codec configuration and the `bin` directory containing the encoded binary files (see detailed documentation of the function in DecodeFDLTree.m).
 	- Decoding may be done only up to a given level of the tree using configuration parameter `cfg.level` (the full tree is decoded by default).
 	- The function also outputs the number of bits `nBits` used and the processing time `decodTime` for decoding up to the specified level (only includes processing time: actual runtime may be longer due to reading/writing files from disk in the current implementation).
