@@ -1,5 +1,9 @@
 %-------------------------------------------------------------------------%
 %          Demo script for the FDL super-resolution algorithm
+%
+%   See the paper: M. Le Pendu and A. Smolic, "High Resolution Light Field
+%   Recovery with Fourier Disparity Layer Completion, Demosaicing, and
+%   Super-Resolution", ICCP 2020.
 %-------------------------------------------------------------------------%
 
 LFDir = [fileparts(mfilename('fullpath')) '/'];

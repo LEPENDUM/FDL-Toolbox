@@ -7,7 +7,7 @@
 % - extraParams : additional parameters specific to some of the shapes.
 %     -#1: thickness : thickness between 0 (i.e. thin border) and 1 (entierly fills the aperture area). Only implemented for ring and polygon shapes.
 %     -#2: numBlades : number of segments for the polygon shape.
-%     -#3: startAngle: rotation angle for the polygon shape.
+%     -#3: startAngle: rotation angle for the polygon shape (in radians).
 
 %Outputs :
 % - Ap : Aperture shape in the pixel domain.

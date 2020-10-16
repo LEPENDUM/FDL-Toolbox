@@ -1,3 +1,4 @@
+
 # FDL toolbox
 
 ## Description
@@ -66,6 +67,11 @@ The main features are listed here (detailed documentations of the referenced fun
 	- Visualisation of the Fourier magnitude spectrum of the rendered result.
 	- Possibility to save the FDL model (using mat file system).
 
+### 6. FDL Tree Codec (see ./FDLTree_Codec):
+
+- Encoder/Decoder for FDL models using a tree structure as described in the paper: [M. Le Pendu, C. Ozcinar and A. Smolic, "Hierarchical Fourier Disparity Layer Transmission for Light Field Streaming," ICIP 2020.](https://v-sense.scss.tcd.ie/wp-content/uploads/2020/05/FDL_Stream_final.pdf)
+	- See documentation in ./FDLTree_Codec.README.md.
+
 ### 5. Example application scripts (see ./Demo):
 
 - **Demo_FDL_Simple** (both cpu and gpu)
@@ -78,6 +84,10 @@ The main features are listed here (detailed documentations of the referenced fun
 - **Demo_FDL_View_Extract** (gpu only)
 	- Script for Lytro camera view extraction using FDL completion, super-resolution and  color demosaicing in [2]. The [V-Sense Light Field Toolbox](https://github.com/V-Sense/LFToolbox-CLIM_VSENSE) is required to previously convert RAW sensor data into incomplete views along their masks indicating the missing pixels.
 
+- **Demo_FDLTree_Codec** (both cpu and gpu)
+	- Demo script of the FDL Tree codec. The demo generates a FDL with the Demo_FDL_Simple script, encodes/decodes it in the FDL Tree representation, and displays decoded results for different levels of the tree.
+
+
 ## Requirements
 
 The toolbox has been developped using Matlab 2017a and Windows 10.
@@ -88,6 +98,6 @@ For the GPU versions of the tools, Matlab's Parallel Processing Toolbox and a CU
 
 When using the FDL toolbox in your reasearch, please cite the relevant papers:
 
-[\[1\] M. Le Pendu, C. Guillemot and A. Smolic, "A Fourier Disparity Layer Representation for Light Fields," in IEEE Transactions on Image Processing_, vol. 28, no. 11, pp. 5740-5753, Nov. 2019.](https://v-sense.scss.tcd.ie/wp-content/uploads/2019/05/FDL_preprint.pdf)
+[\[1\] M. Le Pendu, C. Guillemot and A. Smolic, "A Fourier Disparity Layer Representation for Light Fields," in IEEE Transactions on Image Processing, vol. 28, no. 11, pp. 5740-5753, Nov. 2019.](https://v-sense.scss.tcd.ie/wp-content/uploads/2019/05/FDL_preprint.pdf)
 
 [\[2\] M. Le Pendu, A. Smolic "High Resolution Light Field Recovery with Fourier Disparity Layer Completion, Demosaicing, and Super-Resolution", International Conference on Computational Photography (ICCP) 2020.](https://v-sense.scss.tcd.ie/wp-content/uploads/2017/10/FDLSR_ICCP_preprint.pdf)

@@ -1,12 +1,15 @@
 %-------------------------------------------------------------------------%
 %   Demo script for the FDL construction algorithm (no super-resolution)
+%
+%   See the paper: M. Le Pendu, C. Guillemot and A. Smolic, "A Fourier
+%   Disparity Layer Representation for Light Fields", Transactions on Image
+%   Processing, 2019.
 %-------------------------------------------------------------------------%
 
 LFDir = [fileparts(mfilename('fullpath')) '/'];
 useGPU = parallel.gpu.GPUDevice.isAvailable;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 %%  Input Light Field parameters %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 LFName = 'Illum_Field';

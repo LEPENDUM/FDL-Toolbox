@@ -1,6 +1,10 @@
 %-------------------------------------------------------------------------%
 %   Demo script for the FDL completion/super-resolution/demosaicing
 %   algorithm to extract a Light Field from Lytro camera RAW data.
+%   See the paper: M. Le Pendu and A. Smolic, "High Resolution Light Field
+%   Recovery with Fourier Disparity Layer Completion, Demosaicing, and
+%   Super-Resolution", ICCP 2020.
+%
 %   The Lytro RAW data must be converted first to generate incomplete views
 %   using an external toolbox (see instructions below).
 %   The scripts generates the final central view and focal stack.

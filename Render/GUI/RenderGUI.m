@@ -160,7 +160,7 @@ classdef RenderGUI < handle
             obj.numBladesPanel.maxSize(1) = horizMaxSize;
             
             %Add slider controling the aperture angle.
-            obj.anglePanel = SliderPanel(obj.UIPanel, @(src,evnt)RenderGUI.slideAngle(obj, src, evnt), 'Aperture angle', 0, 180, obj.model.apAngle, 30,60);
+            obj.anglePanel = SliderPanel(obj.UIPanel, @(src,evnt)RenderGUI.slideAngle(obj, src, evnt), 'Aperture angle', 0, 180, obj.model.apAngle*180/pi, 30,60);
             obj.anglePanel.minMargin = [horizMinMargin vertMinMargin];
             obj.anglePanel.maxMargin(2) = vertMaxMargin;
             obj.anglePanel.minSize(1) = horizMinSize;
